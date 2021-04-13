@@ -76,25 +76,25 @@ class RedirectView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, hashed_string=None):
-
         start = time.time()
-        try:
 
-            # Get the original
-            # url from redis and redirect the guest(visitor)
-            original_url = get_original_url("ml/" + hashed_string)
-            response = redirect(original_url)
-            return response
-        finally:
-            # Getting guest(visitor) info from get_guest_info function
-            # using user_agent and META data, then passing them to the save function
+        # Get the original
+        # url from redis and redirect the guest(visitor)
 
-            serializer = RedirectUrlSerializer()
-            guest_url_info = {"hashed_url": "ml/" + hashed_string,
-                              "guest": serializer.get_guest_info(request=request)}
+        original_url = get_original_url("ml/" + hashed_string)
+        response = redirect(original_url)
 
-            serializer.save(guest_url_info)
-            print(time.time() - start)
+        # Getting guest(visitor) info from get_guest_info function
+        # using user_agent and META data, then passing them to the save function
+
+        serializer = RedirectUrlSerializer()
+        guest_url_info = {"hashed_url": "ml/" + hashed_string,
+                          "guest": serializer.get_guest_info(request=request)}
+
+        serializer.save(guest_url_info)
+        print(time.time() - start)
+
+        return response
 
 
 class AnalyticsView(APIView):
@@ -111,9 +111,9 @@ class AnalyticsView(APIView):
             + browser: numbers based on visitor browser
         - time_filter: specifies the time filter to get the reports based on it
         """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
-    def get(self, request, url_id):
+    def post(self, request, url_id):
         serializer = AnalyticsSerializer()
         result = serializer.get_analytics(request.data, url_id)
 
@@ -148,15 +148,7 @@ class UrlView(APIView):
 
         return Response(data)
 
-
-class UserView(APIView):
-    permission_classes = [IsAuthenticated]
-
     def get(self, request):
-        return Response("user_info")
-
-    def put(self, request):
-        return Response("")
-
-    def delete(self, request):
-        return Response("")
+        """Get all the links created by user
+        """
+        return ""
