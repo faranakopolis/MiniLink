@@ -23,6 +23,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from miniLink.core.serializers import *
 from miniLink.redisDriver.utils import *
 
+from miniLink.core.celery_tasks import store_guest_url_info
+
 
 class SignUpView(APIView):
     """Add a user to the system (Sign Up)
@@ -91,7 +93,7 @@ class RedirectView(APIView):
         guest_url_info = {"hashed_url": "ml/" + hashed_string,
                           "guest": serializer.get_guest_info(request=request)}
 
-        serializer.save(guest_url_info)
+        store_guest_url_info.delay(guest_url_info)
         print(time.time() - start)
 
         return response
