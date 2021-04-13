@@ -1,8 +1,9 @@
 """ This module includes the Mini Link's models
-    based on the database design
+     based on the database design.
 
-The names of class's attributes may differ
-    from column names in the related table in database
+    I used Django's built-in User class as my URL owner.
+
+
 """
 
 import datetime
@@ -10,12 +11,6 @@ import datetime
 from django.contrib.auth.models import User, AbstractUser, AbstractBaseUser
 
 from django.db import models
-
-
-# class MyUser(AbstractUser):
-#     created_at = models.DateTimeField(default=datetime.datetime.now())
-#
-#     DATE_JOINED_FIELD = 'created_at'
 
 
 class Url(models.Model):

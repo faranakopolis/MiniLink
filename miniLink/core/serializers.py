@@ -1,3 +1,8 @@
+"""This module includes all the serializers
+    that is needed to make the Views tasks easier and cleaner.
+
+"""
+
 import hashlib
 import random
 import string
@@ -33,10 +38,14 @@ class SignUpSerializer(serializers.ModelSerializer):
 
 
 class AnalyticsSerializer:
+    """This class doesn't override any methods
+        and it has been defined to make some task cleaner.
+    """
+
     def get_start_end_time(self, time_filter):
         """Calculate the start and the end date-time
             based on the time_filter and return it
-            to get analytics to filter data based on it.
+            to get analytics and filter data based on it.
         """
         # Set default value for start and end (time_filter=today)
         end = datetime.datetime.now()
@@ -78,7 +87,7 @@ class AnalyticsSerializer:
                 device = params['visitor_type'][2:]
                 guest_urls = GuestUrl.objects.filter(url_id=url_id, created_at__range=[start, end]).select_related()
 
-                # Counting guests with specified device name
+                # Count the guests with specified device name
                 for gu in guest_urls:
                     if device in gu.guest.device:
                         result += 1
@@ -103,12 +112,6 @@ class AnalyticsSerializer:
 
             if params['visitor_type'].startswith("d_"):  # It's based on the device
                 device = params['visitor_type'][2:]
-                # guest_urls = GuestUrl.objects.filter(url_id=url_id).distinct().select_related()
-
-                # Counting guests with specified device name
-                # for gu in guest_urls:
-                #     if device in gu.guest.device:
-                #         result += 1
 
                 cursor = connection.cursor()
                 cursor.execute(
@@ -125,12 +128,6 @@ class AnalyticsSerializer:
 
             if params['visitor_type'].startswith("b_"):  # It's based on the browser
                 browser = params['visitor_type'][2:]
-                # guest_urls = GuestUrl.objects.filter(url_id=url_id).select_related().distinct()
-                #
-                # # Counting guests with specified device name
-                # for gu in guest_urls:
-                #     if browser in gu.guest.browser:
-                #         result += 1
 
                 cursor = connection.cursor()
                 cursor.execute(
@@ -151,17 +148,17 @@ class AnalyticsSerializer:
 class UrlSerializer(serializers.ModelSerializer):
 
     def hash_url(self, user_id, original_url):
-        """This function hashes the original URL Using mdf
-            To raise security and getting different short links from same Urls
+        """This function hashes the original URL Using md5.
+            To raise security and getting different short links from same URLs
              the hashed string consists:
                 a random 5 character string +
                 original URL +
-                user id
+                the user's id
         """
         mini_link_url = "ml/"
         random_string = ''.join(random.choices(string.ascii_uppercase +
                                                string.digits, k=5))
-        # Mixing them up
+        # Mix them up
         mixed_string = random_string + original_url + str(user_id)
 
         result = hashlib.md5(mixed_string.encode())
@@ -172,8 +169,8 @@ class UrlSerializer(serializers.ModelSerializer):
         return hashed_url
 
     def validate_original_url(self, data):
-        """Validate the Link to be in a proper URL format.
-                """
+        """Validate the original Link to be in a proper URL format.
+        """
 
         if validators.url(data["original"]):
             return True
@@ -191,7 +188,7 @@ class UrlSerializer(serializers.ModelSerializer):
 
         url.save()
 
-        # Adding hashes : original to Redis
+        # save "hashes : original" key-value to Redis
         save_url(hashed=hashed_url,
                  original=self.validated_data['original'])
 
@@ -207,6 +204,7 @@ class RedirectUrlSerializer:
     def get_guest_info(self, request):
         guest_info = dict()
 
+        # Get User IP using the request's META data
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
             ip = x_forwarded_for.split(',')[0]
@@ -225,29 +223,3 @@ class RedirectUrlSerializer:
             request.user_agent.device.brand)
         return guest_info
 
-    # def save(self, guest_url_info):
-    #     """Parsing the data and seperating its different models
-    #         to store in the tables below:
-    #         - guest
-    #         - guest_url
-    #     """
-    #     url = Url.objects.get(hashed=guest_url_info["hashed_url"])
-    #
-    #     # Check if a visitor exists in the db or not
-    #     guest = Guest.objects.filter(ip=guest_url_info["guest"]["ip"],
-    #                                  os=guest_url_info["guest"]["os"],
-    #                                  device=guest_url_info["guest"]["device"],
-    #                                  browser=guest_url_info["guest"]["browser"])
-    #     if guest.exists():
-    #         # Just add data to the guest_url table
-    #         gu = GuestUrl(url=url, guest=guest[0])
-    #         gu.save()
-    #     else:
-    #         # This visitor(guest) is new, add it to its table too
-    #         new_guest = Guest(ip=guest_url_info["guest"]["ip"],
-    #                           os=guest_url_info["guest"]["os"],
-    #                           device=guest_url_info["guest"]["device"],
-    #                           browser=guest_url_info["guest"]["browser"])
-    #         new_guest.save()
-    #         gu = GuestUrl(url=url, guest=new_guest)
-    #         gu.save()
